@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 
+from tile import Tile
+
 photo = cv2.imread("images/hard.jpg")
 
 hard_colors = {
@@ -21,7 +23,6 @@ def find_circles(image: np.ndarray) -> (np.ndarray, list[list]):
     y, x, _ = image.shape
     print(x, y)
 
-    image = image[450:y - 225]
     image = cv2.medianBlur(image, 1)
 
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -59,10 +60,10 @@ def sort_circles_to_grid(circles: list[list]) -> list[list]:
     return sorted_circles
 
 
-def get_grid_with_colors(image, circles: list[list], mode: str) -> list:
+def get_grid_with_colors(image, circles: list[list], mode: int) -> list[Tile]:
     grid = []
 
-    colors = hard_colors if mode == "hard" else expert_colors
+    colors = hard_colors if mode == 2 else expert_colors
 
     for i in range(len(circles)):
         circle = circles[i]
@@ -73,12 +74,12 @@ def get_grid_with_colors(image, circles: list[list], mode: str) -> list:
         color = cv2.mean(image, mask=circle_img)[:3]
         color = tuple([round(i, -1) for i in color])
         color = (70.0, 70.0, 70.0) if color == (60.0, 60.0, 60.0) else color
-        grid.append(colors[color])
+        grid.append(Tile(circle[0], circle[1], colors[color]))
         cv2.circle(image, (circle[0], circle[1]), circle[2], (0, 255, 0), 2)
         cv2.putText(image, f"{i}", (circle[0] - 13, circle[1] + 10), 2, 1, (255, 255, 255))
 
-    cv2.imshow('detected circles', image)
-    cv2.waitKey(0)
+    # cv2.imshow('detected circles', image)
+    # cv2.waitKey(0)
 
     return grid
 
@@ -86,6 +87,6 @@ def get_grid_with_colors(image, circles: list[list], mode: str) -> list:
 if __name__ == "__main__":
     formatted_image, circles_list = find_circles(photo)
     sorted_circles_list = sort_circles_to_grid(circles_list)
-    colors_list = get_grid_with_colors(formatted_image, sorted_circles_list, "hard")
+    colors_list = get_grid_with_colors(formatted_image, sorted_circles_list, 2)
     print(colors_list)
 

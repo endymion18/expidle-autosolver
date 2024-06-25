@@ -1,101 +1,69 @@
 import cv2
 
 from image_processing import find_circles, sort_circles_to_grid, get_grid_with_colors
+from tile import Tile, find_neighbours
 
-photo = cv2.imread("images/hard.jpg")
+photo = cv2.imread("images/expert.jpg")
+
+MAX_COLOR = 6
 
 formatted_image, circles_list = find_circles(photo)
 sorted_circles_list = sort_circles_to_grid(circles_list)
-hard_grid = get_grid_with_colors(formatted_image, sorted_circles_list, "hard")
+tile_grid = get_grid_with_colors(formatted_image, sorted_circles_list, MAX_COLOR)
 
-mode = "hard"
-match mode:
-    case "hard":
-        max_value = 2
-    case "expert":
-        max_value = 6
+neighbours_list = [find_neighbours(i) for i in range(0, 37)]
+
+pagination_indexes = [7, 12, 18, 24, 29, 33]
 
 
-def get_neighbouring_indexes(index: int) -> list[int]:
-    if index < 4:
-        indexes = [index + 4, index + 5]
-        match index:
-            case 0:
-                indexes.append(index + 1)
-            case 3:
-                indexes.append(index - 1)
-            case _:
-                indexes.extend([index + 1, index - 1])
-    elif index < 9:
-        indexes = [index + 5, index + 6]
-        match index:
-            case 4:
-                indexes.extend([index - 4, index + 1])
-            case 8:
-                indexes.extend([index - 5, index - 1])
-            case _:
-                indexes.extend([index - 4, index - 5, index + 1, index - 1])
-    elif index < 15:
-        indexes = [index + 6, index + 7]
-        match index:
-            case 9:
-                indexes.extend([index - 5, index + 1])
-            case 14:
-                indexes.extend([index - 6, index - 1])
-            case _:
-                indexes.extend([index - 5, index - 6, index + 1, index - 1])
-    elif index < 22:
-        indexes = []
-        match index:
-            case 15:
-                indexes.extend([index + 7, index - 6, index + 1])
-            case 21:
-                indexes.extend([index - 7, index - 1, index + 6])
-            case _:
-                indexes.extend([index - 6, index - 7, index + 1, index - 1, index + 6, index + 7])
-    elif index < 28:
-        indexes = [index - 6, index - 7]
-        match index:
-            case 22:
-                indexes.extend([index + 6, index + 1])
-            case 27:
-                indexes.extend([index - 1, index + 5])
-            case _:
-                indexes.extend([index + 1, index - 1, index + 5, index + 6])
-    elif index < 33:
-        indexes = [index - 5, index - 6]
-        match index:
-            case 28:
-                indexes.extend([index + 5, index + 1])
-            case 32:
-                indexes.extend([index - 1, index + 4])
-            case _:
-                indexes.extend([index + 1, index - 1, index + 4, index + 5])
-    else:
-        indexes = [index - 4, index - 5]
-        match index:
-            case 33:
-                indexes.append(index + 1)
-            case 36:
-                indexes.append(index - 1)
-            case _:
-                indexes.extend([index + 1, index - 1])
+def paginate(grid: list[Tile]):
+    for index in pagination_indexes:
+        current_index = index
+        while current_index is not None:
+            while grid[neighbours_list[current_index].top].color != 0:
+                for i in neighbours_list[current_index].get_all_indexes():
+                    grid[i].tap()
+            current_index = neighbours_list[current_index].l2
 
-    indexes.append(index)
-
-    return indexes
-
-
-def solve_puzzle(grid: list):
-    start_index = 3
-    for index in (7, 12, 18):
-        while grid[start_index] != 0:
-            neighbours = get_neighbouring_indexes(index)
-            for i in neighbours:
-                grid[i] += 1
-                grid[i] %= max_value
+        current_index = neighbours_list[index].r2
+        while current_index is not None:
+            while grid[neighbours_list[current_index].top].color != 0:
+                for i in neighbours_list[current_index].get_all_indexes():
+                    grid[i].tap()
+            current_index = neighbours_list[current_index].r2
 
     return grid
 
 
-print(solve_puzzle(hard_grid))
+def solve_puzzle(grid: list[Tile]):
+    grid = paginate(grid)
+    a, b, c, d = grid[33:37]
+    # step 2.1
+    while grid[3].color != c.color:
+        for i in neighbours_list[3].get_all_indexes():
+            grid[i].tap()
+    # step 2.2
+    c_taps = MAX_COLOR - c.color
+    for i in range(c_taps):
+        for j in neighbours_list[8].get_all_indexes():
+            grid[j].tap()
+        for j in neighbours_list[21].get_all_indexes():
+            grid[j].tap()
+    # step 2.3
+    d_taps = MAX_COLOR - d.color
+    for i in range(d_taps):
+        for j in neighbours_list[3].get_all_indexes():
+            grid[j].tap()
+    # step 2.4
+    if (b.color + d.color) % 2 != 0:
+        for i in range(3):
+            for j in neighbours_list[14].get_all_indexes():
+                grid[j].tap()
+
+    grid = paginate(grid)
+
+    return grid
+
+
+print(solve_puzzle(tile_grid))
+
