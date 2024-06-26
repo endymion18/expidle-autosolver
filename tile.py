@@ -1,6 +1,3 @@
-MAX_COLOR = 2
-
-
 class Row:
     length: int
     left_border_index: int
@@ -71,9 +68,9 @@ class Tile:
         self.y = y
         self.color = color
 
-    def tap(self):
+    def tap(self, max_color):
         self.color += 1
-        self.color %= MAX_COLOR
+        self.color %= max_color
 
     def __repr__(self):
         return f"{self.x} {self.y} {self.color}"

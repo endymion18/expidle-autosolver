@@ -3,8 +3,6 @@ import numpy as np
 
 from tile import Tile
 
-photo = cv2.imread("images/hard.jpg")
-
 hard_colors = {
     (30.0, 30.0, 30.0): 0,
     (90.0, 90.0, 90.0): 1}
@@ -21,12 +19,12 @@ expert_colors = {
 
 def find_circles(image: np.ndarray) -> (np.ndarray, list[list]):
     y, x, _ = image.shape
-    print(x, y)
+    # print(x, y)
 
     image = cv2.medianBlur(image, 1)
 
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    circles = cv2.HoughCircles(gray_image, cv2.HOUGH_GRADIENT, 1, 25, param1=10, param2=29, minRadius=36, maxRadius=36)
+    circles = cv2.HoughCircles(gray_image, cv2.HOUGH_GRADIENT, 1, 25, param1=10, param2=29, minRadius=42, maxRadius=44)
     circles = np.uint16(np.around(circles))[0].tolist()
 
     return image, circles
@@ -44,7 +42,7 @@ def sort_circles_to_grid(circles: list[list]) -> list[list]:
     index = 0
 
     while len(circles) != 0:
-        if round(start_y - circles[index][1], -1) in (30, 40) and round(circles[index][0] - start_x, -1) in (60, 70):
+        if round(start_y - circles[index][1], -1) in (40, 50) and round(circles[index][0] - start_x, -1) in (80, 90):
             start_y = circles[index][1]
             start_x = circles[index][0]
             sorted_circles.append(circles[index])
@@ -85,8 +83,9 @@ def get_grid_with_colors(image, circles: list[list], mode: int) -> list[Tile]:
 
 
 if __name__ == "__main__":
+    photo = cv2.imread("images/screen.jpg")
     formatted_image, circles_list = find_circles(photo)
     sorted_circles_list = sort_circles_to_grid(circles_list)
     colors_list = get_grid_with_colors(formatted_image, sorted_circles_list, 2)
-    print(colors_list)
-
+    for i in range(len(colors_list)):
+        print(i, colors_list[i])
